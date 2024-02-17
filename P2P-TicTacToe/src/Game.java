@@ -185,11 +185,11 @@ class Game implements Disposer {
     ) {
       return true;
     }
-
+    // Changed, reversed 2nd column
     if (
-      this.game[2][2] == state &&
+      this.game[2][0] == state &&
       this.game[1][1] == state &&
-      this.game[0][0] == state
+      this.game[0][2] == state
     ) {
       return true;
     }
