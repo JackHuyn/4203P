@@ -44,6 +44,11 @@ let gameOver = false;
 let hostTurn = true;
 
 let boxCount = 0;
+let board = [
+  [0,0,0],
+  [0,0,0],
+  [0,0,0]
+];
 
 
 window.onload = () => {
@@ -69,12 +74,17 @@ const enableConnectionButtons = () => {
 }
 
 const setTurnDisp = () => {
+  if(boxCount > 7) setWinnerDisp();
+  else {
   $("#game-stat-disp").removeClass("invisible").addClass("visible");
 
   if ((gameState.player === "HOST" && hostTurn) || (gameState.player === "OPPONENT" && !hostTurn)) {
     gameStatusDisplay.textContent = "Your Move";
+    // gameStatusDisplay.textContent = "boxCount = " + boxCount;
+
   } else {
     gameStatusDisplay.textContent = "Opponent's Move";
+  }
   }
 }
 
@@ -82,7 +92,7 @@ const setTurnDisp = () => {
  * 
  * @param {"HOST" | "OPPONENT" | "NONE" | undefined} winner 
  */
-const setWinnerDisp = (winner) => {
+const setWinnerDisp = (winner) => { 
   $("#game-stat-disp").removeClass("invisible").addClass("visible");
 
   if ((winner === "HOST" && gameState.player === "HOST") || (winner === "OPPONENT" && gameState.player === "OPPONENT")) {
@@ -118,17 +128,83 @@ const createSource = (url) => {
      * @type {{ location: [number, number], gameOver: boolean, winner: "HOST" | "OPPONENT" | "NONE" }}
      */
     const data = JSON.parse(event.data);
+    data.winner = "NONE";
     console.log(data);
 
     const [x, y] = data.location;
     if (gameState.player === "HOST") {
       placeMarker(x, y, "O");
+      board[x][y] =  1;
     } else {
       placeMarker(x, y, "X");
+      board[x][y] = -1;
     }
+    boxCount++; //wincheck
 
     if (data.gameOver === true) {
+      if(boxCount<8) {
+        if(gameState.player === "HOST") {
+          data.winner = "HOST";
+        }
+        else if(gameState.player === "OPPONENT"){
+          data.winner = "OPPONENT";
+        }
+      }
+      else {
+        data.winner = "NONE";
+        
+        for (let i = 0; i < 3; i++) {
+          if (
+            this.game[i][0] <0 &&
+            this.game[i][1] <0 &&
+            this.game[i][2] <0
+          ) { data.winner = "OPPONENT"; }
+          else if (
+            this.game[i][0] >0 &&
+            this.game[i][1] >0 &&
+            this.game[i][2] >0
+          ) { data.winner = "HOST"; }
+        }
+    
+        for (let j = 0; j < 3; j++) {
+          if (
+            this.game[0][j] <0 &&
+            this.game[1][j] <0 &&
+            this.game[2][j] <0
+          ) { data.winner = "OPPONENT"; }
+          else if (
+            this.game[0][j] >0 &&
+            this.game[1][j] >0 &&
+            this.game[2][j] >0
+          ) { data.winner = "HOST"; }
+        }
+    
+        if ( //diagonal win con "\"
+          this.game[0][0] <0 &&
+          this.game[1][1] <0 &&
+          this.game[2][2] <0
+        ) { data.winner = "OPPONENT"; }
+        else if (
+          this.game[0][0] >0 &&
+          this.game[1][1] >0 &&
+          this.game[2][2] >0
+        ) { data.winner = "HOST"; }
+        
+        // Changed, reversed 2nd column
+        if ( //diagonal win con "/""
+          this.game[2][0] <0 &&
+          this.game[1][1] <0 &&
+          this.game[0][2] <0
+        ) { data.winner = "OPPONENT"; }
+        else if (
+        this.game[2][0] >0 &&
+        this.game[1][1] >0 &&
+        this.game[0][2] >0
+      ) { data.winner = "HOST"; }
+      
+      }
       setWinnerDisp(data.winner);
+      boxCount = 0;
     }
   }
 
@@ -148,6 +224,12 @@ const hostGame = async () => {
       gameCode: data.gameCode,
       eventSource: createSource(`/api/join-as-host?gameCode=${data.gameCode}`),
     };
+    data.winner = "NONE";
+    board = [
+      [0,0,0],
+      [0,0,0],
+      [0,0,0]
+    ];
 
     setTurnDisp();
     disableConnectionButtons();
@@ -209,12 +291,76 @@ const makePlay = async (x, y) => {
     (data) => {
       if (gameState.player === "HOST") {
         placeMarker(x, y, "X");
+        board[x][y] = -1;
       } else {
         placeMarker(x, y, "O");
+        board[x][y] =  1;
       }
+      boxCount++;
+      //if(boxCount > 8) data.gameOver = true;
+      if (data.gameOver) { //
+        if(boxCount<8) {
+          if(gameState.player === "HOST") {
+            data.winner = "HOST";
+          }
+          else if(gameState.player === "OPPONENT"){
+            data.winner = "OPPONENT";
+          }
+        }
+        else {
+          data.winner = "NONE";
+          for (let i = 0; i < 3; i++) {
+            if (
+            this.game[i][0] <0 &&
+            this.game[i][1] <0 &&
+            this.game[i][2] <0
+            ) { data.winner = "HOST"; }
+            else if (
+            this.game[i][0] >0 &&
+            this.game[i][1] >0 &&
+            this.game[i][2] >0
+            ) { data.winner = "OPPONENT"; }
+          }
+    
+          for (let j = 0; j < 3; j++) {
+          if (
+            this.game[0][j] <0 &&
+            this.game[1][j] <0 &&
+            this.game[2][j] <0
+          ) { data.winner = "HOST"; }
+          else if (
+            this.game[0][j] >0 &&
+            this.game[1][j] >0 &&
+            this.game[2][j] >0
+          ) { data.winner = "OPPONENT"; }
+          }
+    
+          if ( //diagonal win con "\"
+          this.game[0][0] <0 &&
+          this.game[1][1] <0 &&
+          this.game[2][2] <0
+          ) { data.winner = "HOST"; }
+          else if (
+          this.game[0][0] >0 &&
+          this.game[1][1] >0 &&
+          this.game[2][2] >0
+          ) { data.winner = "OPPONENT"; }
+        
+        // Changed, reversed 2nd column
+          if ( //diagonal win con "/""
+          this.game[2][0] <0 &&
+          this.game[1][1] <0 &&
+          this.game[0][2] <0
+          ) { data.winner = "HOST"; }
+          else if (
+          this.game[2][0] >0 &&
+          this.game[1][1] >0 &&
+          this.game[0][2] >0
+          ) { data.winner = "OPPONENT"; }
+        }
 
-      if (data.gameOver) {
         setWinnerDisp(data.winner);
+        boxCount = 0;
       }
     }
   );
@@ -227,6 +373,11 @@ function resetGame() {
   $(".o-box").removeClass("o-box").addClass("free-box");
   enableConnectionButtons();
   clearTurnDisp();
+  board = [
+    [0,0,0],
+    [0,0,0],
+    [0,0,0]
+  ];
 
   // TODO: Remove
   $("#box-1-1").html("");
