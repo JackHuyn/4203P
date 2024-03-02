@@ -64,6 +64,7 @@ class Game implements Disposer {
       return PlayResult.NOT_YOUR_TURN;
     }
 
+    /*
     OutputStream stream;
     if (this.next == Player.HOST) {
       this.next = Player.OPPONENT;
@@ -72,6 +73,7 @@ class Game implements Disposer {
       this.next = Player.HOST;
       stream = Utils.getOrThrow(this.host, "NO_HOST");
     }
+    */ //code cut here *** 1FIX
 
     // The game index starts at 0
     if (x > 2 || x < 0 || y > 2 || y < 0) {
@@ -82,11 +84,22 @@ class Game implements Disposer {
       return PlayResult.PLACEMENT_CONFLICT;
     }
 
+    //code pasted here *** 1FIX
+    OutputStream stream;
+    if (this.next == Player.HOST) {
+      this.next = Player.OPPONENT;
+      stream = Utils.getOrThrow(this.opponent, "NO_OPPONENT");
+    } else {
+      this.next = Player.HOST;
+      stream = Utils.getOrThrow(this.host, "NO_HOST");
+    }
+
     this.count++;
     if (player == Player.HOST) {
       this.game[x][y] = State.X;
     } else {
-      this.game[y][y] = State.O;
+      //this.game[y][y] = State.O; //ORIGINAL CODE HERE, NEXT LINE IS FIXED VER //fixes #3 & #4 3FIX 4FIX
+      this.game[x][y] = State.O;
     }
 
     Game.log.info(player.toString() + " played " + this.game[x][y].toString() + " at " + x + ", " + y);
@@ -141,7 +154,7 @@ class Game implements Disposer {
       return false;
     }
 
-    this.opponent = Optional.of(opponent);
+    this.opponent = Optional.of(opponent); 
     return true;
   }
 
@@ -154,7 +167,7 @@ class Game implements Disposer {
   }
 
   private void checkFinished() {
-    this.finished = this.checkWon(State.X) || this.checkWon(State.O) || this.count == 9;
+    this.finished = this.checkWon(State.X) || this.checkWon(State.O) ;//|| this.count == 9;
   }
 
   private boolean checkWon(State state) {
@@ -178,7 +191,7 @@ class Game implements Disposer {
       }
     }
 
-    if (
+    if ( //diagonal win con "\"
       this.game[0][0] == state &&
       this.game[1][1] == state &&
       this.game[2][2] == state
@@ -186,7 +199,7 @@ class Game implements Disposer {
       return true;
     }
     // Changed, reversed 2nd column
-    if (
+    if ( //diagonal win con "/""
       this.game[2][0] == state &&
       this.game[1][1] == state &&
       this.game[0][2] == state
